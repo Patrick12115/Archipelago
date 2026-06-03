@@ -7,11 +7,12 @@ from typing import Any, ClassVar
 import orjson
 
 from BaseClasses import Tutorial
+from rule_builder.rules import Has
 from worlds.AutoWorld import WebWorld, World
 from settings import Group, Bool
 
-from .Enums import Items  # IMPORTANT: SoH-style string Enum
 from .Items import MM2ShipItem, item_data_table, item_table, item_name_groups
+from .Enums import Items  # IMPORTANT: SoH-style string Enum
 from .Locations import location_table, location_name_groups
 from .Options import MM2ShipOptions, mm2ship_option_groups
 from .Regions import create_regions_and_locations
@@ -113,10 +114,7 @@ class MM2ShipWorld(World):
             region.name = str(region.name)
 
     def create_item(self, name: str, create_as_event: bool = False) -> MM2ShipItem:
-        from .Enums import Items as ItemsEnum  # local import prevents name collisions
-        from .Items import item_data_table
-
-        item_enum = ItemsEnum(name)
+        item_enum = Items(name)
         entry = item_data_table[item_enum]
 
         return MM2ShipItem(
@@ -145,10 +143,11 @@ class MM2ShipWorld(World):
 
 
     def set_rules(self) -> None:
-        # Victory condition: collect the Victory event (triggered by C++ code when beating Majora or collecting triforce pieces)
-        self.multiworld.completion_condition[self.player] = lambda state: state.has("Victory", self.player)
         if self.options.true_no_logic.value:
             return
+        # Victory condition: collect the Victory event (triggered by C++ code when beating Majora or collecting triforce pieces)
+        self.set_completion_rule(Has(Items.VICTORY))
+
 
 
     def fill_slot_data(self) -> dict[str, Any]:
